@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import re
 from pathlib import Path
@@ -39,10 +41,16 @@ def _overlap(a, b) -> float:
     return (w * h) / area if area > 0 else 0.0
 
 
-def _find_tables(page) -> list[tuple[tuple, str]]:
+def _find_tables(page, use_layout: bool = False) -> list[tuple[tuple, str]]:
     out: list[tuple[tuple, str]] = []
+    # use_layout=False：新版 PyMuPDF 默认先跑 MuPDF 版面分析器（多线程模型推理），
+    # 实测 407 页 137s → 8s，表格数与内容一致甚至更好（版面分析会把中文标点打散）。
+    # 但 GA55_user_manual 这类「无框线表格」只有版面分析认得出来 → 整份文档兜底，见 _extract_document。
     try:
-        finder = page.find_tables()
+        try:
+            finder = page.find_tables(use_layout=use_layout)
+        except TypeError:  # PyMuPDF <1.26 没有 use_layout 参数
+            finder = page.find_tables()
     except Exception:  # 老版本 PyMuPDF 没有该方法
         return out
     for table in getattr(finder, "tables", []) or []:
@@ -122,14 +130,80 @@ def _nearest_caption(
     return best
 
 
-def _crop(page, rect: tuple, out_dir: Path, name: str) -> str:
+def _crop(page, rect: tuple, out_dir: Path, name: str, fresh: bool = True) -> str:
     out = out_dir / name
-    pix = page.get_pixmap(clip=fitz.Rect(*rect), dpi=180)
-    pix.save(str(out))
+    # fresh=True（PDF 刚变过或首次解析）时必须重渲染，否则会留下同名旧图。
+    if fresh or not out.exists():
+        pix = page.get_pixmap(clip=fitz.Rect(*rect), dpi=180)
+        pix.save(str(out))
     try:
         return out.relative_to(ROOT).as_posix()
     except ValueError:
         return str(out)
+
+
+# 页级解析缓存：PDF 的表格/图片/文本行抽取结果按页落盘。
+# 改 chunker/分块逻辑不用重解析 PDF；只有 PDF 本身变了（mtime/size）才失效。
+# ponytail: 只按 mtime+size 判失效，同一 mtime 内改内容不会发现；手册是只读输入，够了。
+CACHE_VERSION = 2
+
+
+def _cache_target(pdf_path: Path, doc_id: str) -> tuple[Path, dict]:
+    st = pdf_path.stat()
+    meta = {
+        "v": CACHE_VERSION,
+        "mtime": st.st_mtime,
+        "size": st.st_size,
+    }
+    key = hashlib.md5(json.dumps(meta, sort_keys=True).encode()).hexdigest()[:16]
+    return settings.index_dir / "pagecache" / f"{doc_id}.{key}.json", meta
+
+
+def _load_page_cache(path: Path, meta: dict, page_count: int) -> list[dict] | None:
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if data.get("meta") != meta or len(data.get("pages") or []) != page_count:
+        return None
+    return data["pages"]
+
+
+def _save_page_cache(path: Path, meta: dict, pages: list[dict]) -> None:
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"meta": meta, "pages": pages}, ensure_ascii=False), encoding="utf-8")
+        tmp.replace(path)
+    except OSError as exc:  # 缓存写不进去不该让整次入库失败
+        log.warning("页缓存写入失败（忽略）：%s", exc)
+
+
+def _extract_page(page, use_layout: bool) -> dict:
+    tables = _find_tables(page, use_layout=use_layout)
+    images = _find_images(page)
+    lines = _lines(page, [r for r, _ in tables] + [r for r, _ in images])
+    return {
+        "tables": [[list(r), md] for r, md in tables],
+        "images": [[list(r), x] for r, x in images],
+        "lines": lines,
+    }
+
+
+def _extract_document(doc) -> list[dict]:
+    """先跑快的 plain 模式；整份文档一个表都没认出来才回退版面分析重扫。
+
+    绝大多数手册有框线，plain 就够（407 页 8s vs 137s）；GA55_user_manual 那类
+    无框线表格只有版面分析认得出，所以按文档兜底，而不是全局开。
+    ponytail: 只看「有没有表」，一份文档里同时存在框线表和无框线表时认不全——手册没这情况。
+    """
+    pages = [_extract_page(page, use_layout=False) for page in doc]
+    if any(p["tables"] for p in pages):
+        return pages
+    log.info("%s: plain 模式未识别到表格，回退版面分析重扫", doc.name)
+    return [_extract_page(page, use_layout=True) for page in doc]
 
 
 def parse_pdf(
@@ -150,13 +224,21 @@ def parse_pdf(
     counter = {"text": 0, "table": 0, "figure": 0}
     doc = fitz.open(pdf_path)
 
+    cache_path, cache_meta = _cache_target(pdf_path, doc_id)
+    pages = _load_page_cache(cache_path, cache_meta, doc.page_count)
+    fresh = pages is None
+
     try:
+        if fresh:
+            pages = _extract_document(doc)
+
         for pno in range(doc.page_count):
             page = doc[pno]
             page_no = pno + 1
-            tables = _find_tables(page)
-            images = _find_images(page)
-            lines = _lines(page, [r for r, _ in tables] + [r for r, _ in images])
+            hit = pages[pno]
+            tables = [(tuple(r), md) for r, md in hit["tables"]]
+            images = [(tuple(r), x) for r, x in hit["images"]]
+            lines = hit["lines"]
             if not lines and not tables and not images:
                 continue
 
@@ -181,7 +263,7 @@ def parse_pdf(
                     consumed.add(idx)
                     cap = lines[idx]["text"]
                 name = f"p{page_no}_{xref or len(figure_items)}.png"
-                figure_items.append((cap, _crop(page, rect, fig_dir, name)))
+                figure_items.append((cap, _crop(page, rect, fig_dir, name, fresh=fresh)))
 
             # 2) 正文 + 标题栈 → 章节路径
             stack: list[tuple[int, str]] = []
@@ -272,6 +354,9 @@ def parse_pdf(
                 )
     finally:
         doc.close()
+
+    if fresh:
+        _save_page_cache(cache_path, cache_meta, pages)
 
     log.info("%s → %d chunks (%s)", pdf_path.name, len(chunks), counter)
     return chunks
