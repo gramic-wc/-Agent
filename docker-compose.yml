@@ -1,0 +1,10 @@
+# 可选：默认用嵌入式 Qdrant（data/qdrant），不需要 Docker。
+# 想跑服务端模式时：docker compose up -d，并在 .env 里设 QDRANT_URL=http://localhost:6333
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./data/qdrant_storage:/qdrant/storage

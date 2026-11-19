@@ -1,0 +1,194 @@
+[
+  {
+    "code": "P-1001",
+    "name": "油冷却器芯",
+    "spec": "GA55 专用",
+    "device_model": "GA55",
+    "stock": 12,
+    "lead_days": 1
+  },
+  {
+    "code": "P-1002",
+    "name": "冷却风扇皮带",
+    "spec": "GA55 专用",
+    "device_model": "GA55",
+    "stock": 8,
+    "lead_days": 15
+  },
+  {
+    "code": "P-1003",
+    "name": "油过滤器芯",
+    "spec": "GA55 专用",
+    "device_model": "GA55",
+    "stock": 7,
+    "lead_days": 15
+  },
+  {
+    "code": "P-1004",
+    "name": "油泵",
+    "spec": "GA55 专用",
+    "device_model": "GA55",
+    "stock": 6,
+    "lead_days": 15
+  },
+  {
+    "code": "P-1005",
+    "name": "压力传感器",
+    "spec": "GA55 专用",
+    "device_model": "GA55",
+    "stock": 7,
+    "lead_days": 15
+  },
+  {
+    "code": "P-1006",
+    "name": "最小压力阀",
+    "spec": "GA55 专用",
+    "device_model": "GA55",
+    "stock": 5,
+    "lead_days": 7
+  },
+  {
+    "code": "P-1007",
+    "name": "油气分离器芯",
+    "spec": "GA55 专用",
+    "device_model": "GA55",
+    "stock": 0,
+    "lead_days": 1
+  },
+  {
+    "code": "P-1008",
+    "name": "回油管",
+    "spec": "GA55 专用",
+    "device_model": "GA55",
+    "stock": 8,
+    "lead_days": 15
+  },
+  {
+    "code": "P-1009",
+    "name": "主轴轴承",
+    "spec": "VMC850 专用",
+    "device_model": "VMC850",
+    "stock": 2,
+    "lead_days": 3
+  },
+  {
+    "code": "P-1010",
+    "name": "传动皮带",
+    "spec": "VMC850 专用",
+    "device_model": "VMC850",
+    "stock": 10,
+    "lead_days": 3
+  },
+  {
+    "code": "P-1011",
+    "name": "刀套",
+    "spec": "VMC850 专用",
+    "device_model": "VMC850",
+    "stock": 5,
+    "lead_days": 7
+  },
+  {
+    "code": "P-1012",
+    "name": "气压调节阀",
+    "spec": "VMC850 专用",
+    "device_model": "VMC850",
+    "stock": 5,
+    "lead_days": 7
+  },
+  {
+    "code": "P-1013",
+    "name": "编码器线缆",
+    "spec": "VMC850 专用",
+    "device_model": "VMC850",
+    "stock": 7,
+    "lead_days": 15
+  },
+  {
+    "code": "P-1014",
+    "name": "伺服驱动器",
+    "spec": "VMC850 专用",
+    "device_model": "VMC850",
+    "stock": 8,
+    "lead_days": 1
+  },
+  {
+    "code": "P-1015",
+    "name": "滚珠丝杠",
+    "spec": "VMC850 专用",
+    "device_model": "VMC850",
+    "stock": 1,
+    "lead_days": 1
+  },
+  {
+    "code": "P-1016",
+    "name": "直线导轨",
+    "spec": "VMC850 专用",
+    "device_model": "VMC850",
+    "stock": 5,
+    "lead_days": 7
+  },
+  {
+    "code": "P-1017",
+    "name": "深沟球轴承",
+    "spec": "YE3-160M 专用",
+    "device_model": "YE3-160M",
+    "stock": 7,
+    "lead_days": 15
+  },
+  {
+    "code": "P-1018",
+    "name": "润滑脂",
+    "spec": "YE3-160M 专用",
+    "device_model": "YE3-160M",
+    "stock": 6,
+    "lead_days": 15
+  },
+  {
+    "code": "P-1019",
+    "name": "联轴器弹性块",
+    "spec": "YE3-160M 专用",
+    "device_model": "YE3-160M",
+    "stock": 0,
+    "lead_days": 1
+  },
+  {
+    "code": "P-1020",
+    "name": "地脚螺栓",
+    "spec": "YE3-160M 专用",
+    "device_model": "YE3-160M",
+    "stock": 1,
+    "lead_days": 1
+  },
+  {
+    "code": "P-1021",
+    "name": "绝缘漆",
+    "spec": "YE3-160M 专用",
+    "device_model": "YE3-160M",
+    "stock": 8,
+    "lead_days": 3
+  },
+  {
+    "code": "P-1022",
+    "name": "接线盒密封圈",
+    "spec": "YE3-160M 专用",
+    "device_model": "YE3-160M",
+    "stock": 2,
+    "lead_days": 3
+  },
+  {
+    "code": "P-1023",
+    "name": "启动电容",
+    "spec": "YE3-160M 专用",
+    "device_model": "YE3-160M",
+    "stock": 7,
+    "lead_days": 15
+  },
+  {
+    "code": "P-1024",
+    "name": "接触器",
+    "spec": "YE3-160M 专用",
+    "device_model": "YE3-160M",
+    "stock": 12,
+    "lead_days": 1
+  }
+]

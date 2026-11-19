@@ -1,0 +1,32 @@
+[project]
+name = "eqagent"
+version = "0.1.0"
+description = "设备检修知识检索与作业 Agent（4 周学习项目）"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.6",
+    "python-dotenv>=1.0",
+    "pymupdf>=1.24",
+    "jieba>=0.42",
+    "rank-bm25>=0.2.2",
+    "qdrant-client>=1.9",
+    "langgraph>=0.2",
+    "streamlit>=1.36",
+    "pandas>=2.2",
+]
+
+[project.scripts]
+eq-ingest = "eqagent.ingest.pipeline:main"
+eq-ask = "eqagent.agent.run:main"
+eq-eval = "eqagent.eval.runner:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/eqagent"]
+
+[tool.uv]
+package = true

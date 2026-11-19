@@ -1,0 +1,13 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# 生成物
+data/qdrant/
+data/index/
+data/figure_cache/
+data/work_orders/
+data/eval/results_*.json

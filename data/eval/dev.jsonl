@@ -1,0 +1,30 @@
+{"id":"d01","symptom":"3号车间GA55空压机运行20分钟后排气温度高报警并跳机，环境温度35℃","device_model":"GA55","expect_causes":["冷却器","风扇","油位"]}
+{"id":"d02","symptom":"动力站GA55加载时排气温度快速上升到108℃后高温停机","device_model":"GA55","expect_causes":["冷却器","风扇","油位"]}
+{"id":"d03","symptom":"GA55报E-305，油压表只有0.15MPa，运行中油压波动并有异响","device_model":"GA55","expect_causes":["过滤器","油泵","泄漏"]}
+{"id":"d04","symptom":"空压机油压建立缓慢，开机几分钟就报油压不足","device_model":"","expect_causes":["过滤器","油泵","泄漏"]}
+{"id":"d05","symptom":"GA55加卸载间隔不到30秒，压力在0.6到0.8MPa之间反复跳动","device_model":"GA55","expect_causes":["传感器","用气量","压力阀"]}
+{"id":"d06","symptom":"用气端没变化但空压机频繁加卸载，储气罐压力不稳","device_model":"","expect_causes":["传感器","用气量","压力阀"]}
+{"id":"d07","symptom":"储气罐排污口排出大量油水混合物，用气端出现油雾","device_model":"GA55","expect_causes":["分离器","回油管","油品"]}
+{"id":"d08","symptom":"GA55油耗明显上升，油分离器压差报警同时排气含油量高","device_model":"GA55","expect_causes":["分离器","回油管","油品"]}
+{"id":"d09","symptom":"机加区VMC850主轴3000转以上出现周期性异响，停车时也有金属摩擦声","device_model":"VMC850","expect_causes":["轴承","皮带","润滑"]}
+{"id":"d10","symptom":"加工中心主轴噪声增大并伴随温升，怀疑主轴有问题","device_model":"","expect_causes":["轴承","皮带","润滑"]}
+{"id":"d11","symptom":"VMC850换刀到一半停止，刀套未到位，报ALM 2021","device_model":"VMC850","expect_causes":["刀套","气压","机械手"]}
+{"id":"d12","symptom":"加工中心换刀动作中断，机械手抓刀后无法退回原位","device_model":"","expect_causes":["刀套","气压","机械手"]}
+{"id":"d13","symptom":"VMC850 X轴快移过程中报ALM 401伺服过载并断电","device_model":"VMC850","expect_causes":["编码器","驱动器","负载"]}
+{"id":"d14","symptom":"加工中心开机回零时伺服报警无法复位","device_model":"VMC850","expect_causes":["编码器","驱动器","负载"]}
+{"id":"d15","symptom":"VMC850批量加工孔径比图纸大0.03mm，换向时有过切痕迹","device_model":"VMC850","expect_causes":["间隙","导轨","热变形"]}
+{"id":"d16","symptom":"加工中心连续加工后尺寸逐渐漂移","device_model":"","expect_causes":["间隙","导轨","热变形"]}
+{"id":"d17","symptom":"冲压线YE3-160M电机前端轴承温度95℃并有焦味","device_model":"YE3-160M","expect_causes":["润滑脂","轴承磨损","过盈"]}
+{"id":"d18","symptom":"电机运行1小时后轴承位烫手，温度持续上升伴轻微异响","device_model":"","expect_causes":["润滑脂","轴承磨损","过盈"]}
+{"id":"d19","symptom":"总装线电机测振仪显示水平方向振动11mm/s，整机抖动明显","device_model":"YE3-160M","expect_causes":["动平衡","地脚螺栓","对中"]}
+{"id":"d20","symptom":"电机振动随转速升高加剧，怀疑安装问题","device_model":"","expect_causes":["动平衡","地脚螺栓","对中"]}
+{"id":"d21","symptom":"YE3-160M摇表测对地绝缘只有0.3MΩ，绕组端部有粉尘和放电痕迹","device_model":"YE3-160M","expect_causes":["受潮","过载","粉尘"]}
+{"id":"d22","symptom":"电机合闸后嗡嗡响但不转，接触器反复跳闸","device_model":"YE3-160M","expect_causes":["电容","电压","负载"]}
+{"id":"r01","symptom":"帮我写一份下周的部门周报","expect_reject":true}
+{"id":"r02","symptom":"公司差旅报销标准是多少","expect_reject":true}
+{"id":"r03","symptom":"今天上海天气怎么样","expect_reject":true}
+{"id":"r04","symptom":"给我讲讲量子计算的原理","expect_reject":true}
+{"id":"r05","symptom":"推荐几本学Python的书","expect_reject":true}
+{"id":"r06","symptom":"明天股价会涨吗","expect_reject":true}
+{"id":"r07","symptom":"帮我翻译一段英文合同","expect_reject":true}
+{"id":"r08","symptom":"公司年会安排在什么时候","expect_reject":true}
