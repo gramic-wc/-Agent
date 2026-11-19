@@ -35,6 +35,7 @@ def search_manual(
             "chunk_id": h.chunk_id,
             "doc_id": h.payload.get("doc_id", ""),
             "doc_title": h.doc_title,
+            "device_model": h.payload.get("device_model", ""),
             "page": h.page,
             "block_type": h.payload.get("block_type", ""),
             "figure_no": h.payload.get("figure_no", ""),
