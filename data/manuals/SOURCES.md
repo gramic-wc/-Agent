@@ -1,4 +1,4 @@
-# 手册来源清单（实测版）
+﻿# 手册来源清单（实测版）
 
 > 本文件记录**已验证可直连下载**的手册链接与实测切块数据。
 > 数据由 `scripts/check_manual.py` 产出（正文/表/图 = 本项目的解析链实际能切出的块数），
@@ -21,6 +21,7 @@
 1. 有**表格**（参数表 / 故障码表 / 扭矩表 / 保养周期表）
 2. 有**章节编号**（`section_path` 才有内容，引用才能定位）
 3. 全文至少 3 份带**插图**（剖面图 / 流程图 / 接线图），否则多模态链路测不出来
+4. **块里得是真字**：`check_manual.py` 的「乱码/无词块」占比 ≤ 30%，超了就按「九、踩过的坑」处理
 
 ---
 
@@ -145,7 +146,22 @@ uv run eq-ingest --no-vlm
 uv run python -c "import json,collections;rows=[json.loads(l) for l in open('data/index/chunks.jsonl',encoding='utf-8')];print(len(rows));print(collections.Counter(r['block_type'] for r in rows));print(collections.Counter(r['device_model'] or '未识别' for r in rows))"
 ```
 
-通过标准：`block_type` 三类都有；`device_model` 无"未识别"（有就补 manifest 或改文件名）。
+通过标准：`block_type` 三类都有；`device_model` 无"未识别"（有就补 manifest 或改文件名）；
+**并且 `check_manual.py` 的「乱码/无词块」占比 ≤ 30%**。
+
+乱码超标的处理：
+
+```powershell
+# 看是哪份坏了
+uv run python scripts/check_manual.py data/manuals/ga55/xxx.pdf
+
+# 图好、字坏 → 写进 skip_text.txt（只丢文字，保留图块）
+notepad data/manuals/skip_text.txt
+
+# 改完必须重建，否则旧索引还在
+Remove-Item -Recurse -Force data/index, data/qdrant
+uv run eq-ingest --no-vlm
+```
 
 ---
 
@@ -162,8 +178,53 @@ uv run python -c "import json,collections;rows=[json.loads(l) for l in open('dat
 
 ---
 
-## 八、下载记录（自己填）
+## 八、入库实测记录（2026-11-20，eq-ingest --no-vlm）
 
-| 日期 | 文件名 | 页 | 正文 | 表 | 图 | 结论 | 备注 |
+> 「乱码块」= `ingest/quality.py` 判定的乱码 / 无完整词 / 符号堆，已由入库流程自动丢弃。
+> 「入库块」= 真正进了 `chunks.jsonl` 和 Qdrant 的块数。
+
+| 文档 | 页 | 正文 | 表 | 图 | 乱码块 | 入库块 | 结论 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 2026-11-19 | （示例）GA55_instruction_book_en.pdf | 145 | 575 | 140 | 51 | ✅ | 英文，表格图纸齐全 |
+| GA55_instruction_book_en | 145 | 575 | 140 | 51 | 715 (95%) | **51** | ⚠️ 文字层损坏，仅收图块（见 `skip_text.txt`） |
+| GA55_user_manual | 34 | 120 | 50 | 5 | 4 | 171 | ✅ 可用 |
+| GA55_维护保养规范_团标 | 20 | 48 | 9 | 0 | 13 | 44 | ✅ 可用（无图） |
+| 单螺杆_变频喷水_团标 | 14 | 34 | 8 | 1 | 8 | 35 | ○ 机型不同，作对照 |
+| VMC850_SINUMERIK_系统手册 | 407 | 1289 | 111 | 243 | 367 | 1276 | ✅ 主力 |
+| VMC850_GSK983M_PLC使用说明 | 57 | 160 | 35 | 10 | 41 | 164 | ✅ 报警码表主力 |
+| VMC850_JN-NV900_样本 | 9 | 27 | 4 | 3 | 1 | 33 | ✅ 规格表 |
+| YE3_皖南_样本 | 16 | 44 | 19 | 12 | 16 | 59 | ✅ 参数表 + 结构图 |
+| YE3_YE5_团标 | 27 | 70 | 26 | 3 | 26 | 73 | ✅ 表格最丰富 |
+| YE3_高压电机_说明书 | 17 | 50 | 7 | 0 | 13 | 44 | ✅ 检修条目多（无图） |
+| YE3_YBX3_使用说明书 | 12 | 33 | 6 | 5 | 9 | 35 | ✅ 故障现象表 |
+| YE3_样本_2 | 9 | 21 | 11 | 6 | 1 | 37 | ✅ 补充 |
+| **合计** | — | 2471 | 426 | 339 | 1214 | **2022** | text 1403 / table 280 / figure 339 |
+
+分布自检：`device_model` = GA55 301 / VMC850 1473 / YE3-160M 248，**无「未识别」**；
+339 张图 `image_path` 全部存在；残留乱码块 **0**。
+
+---
+
+## 九、踩过的坑（别再踩）
+
+1. **「能切出多少块」不等于「块里是真字」**。
+   `GA55_instruction_book_en.pdf` 块数看着漂亮（766），实际 95% 是
+   `qÖÜñèüê`、`6==`、`665` —— 该 PDF 用自定义子集字体且缺 ToUnicode 表。
+   现在 `check_manual.py` 会打印「乱码/无词块 N/M（百分比）」，**>30% 直接判 ✗**。
+2. **坏字体文档的图是好的**。像素不受字体影响，所以别整份删，
+   把 doc_id 写进 `data/manuals/skip_text.txt` → 只收图、丢字。
+3. **`_probe/` 会被扫进索引**。`eq-ingest` 现在跳过任何以 `_` 开头的目录，
+   体检样本不会污染正式索引。
+4. **表格不能用正文的「词占比」去卡**，否则扭矩表/参数表这类纯数字表会被杀光。
+   `quality.py` 对 `block_type == "table"` 放宽第 4 条。
+
+---
+
+## 十、还缺什么（Day 6 checkpoint 用）
+
+| 设备 | 现状 | 缺口 |
+| --- | --- | --- |
+| GA55 | 3 份可用，但**文字主力是一份 34 页的 user manual** | 缺中文版完整操作/维修说明书 |
+| VMC850 | 2 份可用（SINUMERIK + GSK），均为数控系统级 | **缺 VMC850 整机操作/维修手册** |
+| YE3-160M | 5 份可用 | 基本够用 |
+
+**降级线**：若 Day 6 仍 < 15 份可用文档，收缩为只做 GA55 一类设备，其余设备只留样本页做型号过滤演示。

@@ -18,8 +18,13 @@ from pathlib import Path
 from ..config import DEVICES, ROOT, guess_device, settings
 from ..schema import Chunk
 from . import image_desc, parse
+from .quality import explain, is_garbage
 
 log = logging.getLogger("eqagent.ingest")
+
+# 只丢文字、保留图纸的文档清单（一行一个 doc_id，# 后面写原因）。
+# 适用场景：PDF 用自定义字体且缺 ToUnicode 表 → 抽出来全是乱码，但图是好的。
+SKIP_TEXT_NAME = "skip_text.txt"
 
 
 def _read_manifest(path: Path) -> list[dict]:
@@ -35,6 +40,11 @@ def _read_manifest(path: Path) -> list[dict]:
 def _scan_manuals(root: Path) -> list[dict]:
     rows = []
     for pdf in sorted(root.rglob("*.pdf")):
+        rel = pdf.relative_to(root)
+        # 跳过 _probe / _tmp 这类下划线目录：里面是体检用的样本，不是正式手册
+        if any(part.startswith("_") for part in rel.parts[:-1]):
+            log.info("跳过探针文件：%s", rel.as_posix())
+            continue
         doc_id = pdf.stem
         model = guess_device(pdf.name) or guess_device(str(pdf.parent))
         rows.append(
@@ -49,8 +59,50 @@ def _scan_manuals(root: Path) -> list[dict]:
     return rows
 
 
+def load_skip_text(root: Path) -> set[str]:
+    """读 skip_text.txt：这些 doc_id 只保留图块，文字/表格块全部丢弃。"""
+    path = root / SKIP_TEXT_NAME
+    if not path.exists():
+        return set()
+    ids = set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.split("#", 1)[0].strip()
+        if line:
+            ids.add(line)
+    return ids
+
+
+def filter_chunks(
+    chunks: list[Chunk], skip_text: bool = False
+) -> tuple[list[Chunk], dict[str, int]]:
+    """入库前的质检：丢掉乱码/无词的块。图块一律保留（图是像素，不受坏字体影响）。"""
+    kept: list[Chunk] = []
+    stats = {"keep": 0, "drop_garbage": 0, "drop_broken_font": 0, "keep_figure": 0}
+    reasons: dict[str, int] = {}
+    for c in chunks:
+        if c.block_type == "figure":
+            kept.append(c)
+            stats["keep_figure"] += 1
+            continue
+        if skip_text:
+            stats["drop_broken_font"] += 1
+            continue
+        if is_garbage(c.text, c.block_type):
+            stats["drop_garbage"] += 1
+            key = explain(c.text, c.block_type)
+            reasons[key] = reasons.get(key, 0) + 1
+            continue
+        kept.append(c)
+        stats["keep"] += 1
+    if reasons:
+        top = ", ".join(f"{k}×{v}" for k, v in sorted(reasons.items(), key=lambda x: -x[1])[:3])
+        log.info("    丢弃原因（前 3）：%s", top)
+    return kept, stats
+
+
 def collect_chunks(rows: list[dict], base_dir: Path, use_vlm: bool) -> list[Chunk]:
     all_chunks: list[Chunk] = []
+    skip_text_ids = load_skip_text(base_dir)
     for row in rows:
         pdf = Path(row["file"])
         if not pdf.is_absolute():
@@ -61,12 +113,23 @@ def collect_chunks(rows: list[dict], base_dir: Path, use_vlm: bool) -> list[Chun
         model = row.get("device_model") or guess_device(pdf.name)
         if model and model not in DEVICES:
             log.warning("型号 %s 不在 DEVICES 里，检索过滤会失效（在 config.py 里补上）", model)
+        doc_id = row.get("doc_id") or pdf.stem
         chunks = parse.parse_pdf(
             pdf,
-            doc_id=row.get("doc_id") or pdf.stem,
+            doc_id=doc_id,
             device_model=model,
             doc_title=row.get("title", ""),
             device_type=row.get("device_type", ""),
+        )
+        skip_text = doc_id in skip_text_ids
+        chunks, stats = filter_chunks(chunks, skip_text=skip_text)
+        log.info(
+            "%s：保留 正文/表 %d + 图 %d，丢弃 乱码 %d%s",
+            doc_id,
+            stats["keep"],
+            stats["keep_figure"],
+            stats["drop_garbage"],
+            f"，文字层损坏丢弃 {stats['drop_broken_font']}" if skip_text else "",
         )
         all_chunks.extend(chunks)
     if use_vlm:
