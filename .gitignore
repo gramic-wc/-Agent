@@ -11,3 +11,7 @@ data/index/
 data/figure_cache/
 data/work_orders/
 data/eval/results_*.json
+
+# 手册 PDF 不入库（来源见 data/manuals/SOURCES.md）
+data/manuals/**/*.pdf
+data/manuals/_probe/
