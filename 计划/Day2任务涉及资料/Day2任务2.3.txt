@@ -1,0 +1,113 @@
+PS D:\pi 工作文件夹\项目学习> uv run python -c "import json; from eqagent.agent.tools import search_manual; rows=json.load(open('data/dev_cn.json',encoding='utf-8'))[:8]; [print('\n###',r['id'],r['symptom'],'\n  期望原因:',','.join(r['expect_causes']),'\n  结果:',*[(h['device_model'],h['doc_title'][:14],'p'+str(h['page']),h['block_type']) for h in search_manual(r['symptom'],device_model=r['device_model'] or None,top_k=5)],sep='\n    ') for r in rows]" 2>$null
+
+###
+    d01
+    3号车间GA55空压机运行20分钟后排气温度高报警并跳机，环境温度35℃
+
+  期望原因:
+    冷却器,风扇,油位
+
+  结果:
+    ('GA55', 'GA55_user_manu', 'p30', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p13', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p20', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p7', 'text')
+    ('GA55', '单螺杆_变频喷水_团标', 'p8', 'text')
+
+###
+    d02
+    动力站GA55加载时排气温度快速上升到108℃后高温停机
+
+  期望原因:
+    冷却器,风扇,油位
+
+  结果:
+    ('GA55', 'GA55_user_manu', 'p30', 'table')
+    ('GA55', 'GA55_user_manu', 'p18', 'text')
+    ('GA55', 'GA55_维护保养规范_团标', 'p20', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p13', 'table')
+    ('GA55', 'GA55_user_manu', 'p19', 'text')
+
+###
+    d03
+    GA55报E-305，油压表只有0.15MPa，运行中油压波动并有异响
+
+  期望原因:
+    过滤器,油泵,泄漏
+
+  结果:
+    ('GA55', 'GA55_user_manu', 'p31', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p20', 'table')
+    ('GA55', 'GA55_user_manu', 'p18', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p7', 'text')
+    ('GA55', 'GA55_user_manu', 'p22', 'text')
+
+###
+    d04
+    空压机油压建立缓慢，开机几分钟就报油压不足
+
+  期望原因:
+    过滤器,油泵,泄漏
+
+  结果:
+    ('GA55', 'GA55_维护保养规范_团标', 'p13', 'table')
+    ('VMC850', 'VMC850_SINUMER', 'p87', 'text')
+    ('VMC850', 'VMC850_SINUMER', 'p73', 'text')
+    ('GA55', 'GA55_维护保养规范_团标', 'p1', 'text')
+    ('GA55', 'GA55_user_manu', 'p31', 'text')
+
+###
+    d05
+    GA55加卸载间隔不到30秒，压力在0.6到0.8MPa之间反复跳动
+
+  期望原因:
+    传感器,用气量,压力阀
+
+  结果:
+    ('GA55', 'GA55_user_manu', 'p28', 'text')
+    ('GA55', 'GA55_user_manu', 'p31', 'table')
+    ('GA55', 'GA55_user_manu', 'p30', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p20', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p7', 'text')
+
+###
+    d06
+    用气端没变化但空压机频繁加卸载，储气罐压力不稳
+
+  期望原因:
+    传感器,用气量,压力阀
+
+  结果:
+    ('GA55', 'GA55_维护保养规范_团标', 'p7', 'text')
+    ('GA55', 'GA55_维护保养规范_团标', 'p13', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p20', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p1', 'text')
+    ('GA55', '单螺杆_变频喷水_团标', 'p9', 'text')
+
+###
+    d07
+    储气罐排污口排出大量油水混合物，用气端出现油雾
+
+  期望原因:
+    分离器,回油管,油品
+
+  结果:
+    ('GA55', 'GA55_user_manu', 'p20', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p1', 'text')
+    ('GA55', 'GA55_user_manu', 'p31', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p15', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p15', 'text')
+
+###
+    d08
+    GA55油耗明显上升，油分离器压差报警同时排气含油量高
+
+  期望原因:
+    分离器,回油管,油品
+
+  结果:
+    ('GA55', 'GA55_user_manu', 'p31', 'table')
+    ('GA55', 'GA55_user_manu', 'p30', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p20', 'table')
+    ('GA55', '单螺杆_变频喷水_团标', 'p12', 'table')
+    ('GA55', 'GA55_维护保养规范_团标', 'p13', 'table')
