@@ -171,7 +171,7 @@ uv run python -c "import json;rows=[json.loads(l) for l in open('data/index/chun
 👀 输出里每条都带 `块类型` 和 `字数`。**从里面挑 1~2 个"看起来最该回答这个问题"的块**当坐标，写下来：
 
 ```
-我的坐标：GA55 p___  ______（text/table）    字数约 ___
+我的坐标：GA55 p9 text（692 字，含 5.18 最小压力阀）＋ GA55 p14 table（1440 字，点检表）＋ GA55 p9 text（685 字，GDCAGO 5.2.2）
 命中块数 3
 GA55 p9 text 685 T/GDCAGO 1—2024 b) 对压缩机系统进行试运行中的润滑、振动、噪声、压缩空气
 GA55 p14 table 1440 【表格】 |  |  | 6、单向阀是否正常 |  | √ |  |  | | --- |
@@ -192,8 +192,9 @@ uv run python scripts/search_debug.py "用气端没变化但空压机频繁加�
 > ⚠️ **先核对再抄**：步骤 1 记下的 3 条坐标，只有第 3 条真的出现在 `第三部分d06.txt` 里。
 > 第 1、2 条 `grep` 整个文件 0 命中（`GDCAGO`、`单向阀`、`试运行` 都搜不到），它们来自
 > `Day2任务涉及资料\召回对比临时文件.txt` 的另一次检索（Day2 的查询），**不是 d06 这条 query 的 top 榜**。
-> 已回 `data/index/chunks.jsonl` 逐条验过：三个块在库里都真实存在（字数 685 / 1440 / 692 对得上），
-> 只是 d06 这条 query 的前 20/30 名里没它们。
+> 已回 `data/index/chunks.jsonl` 逐条验过：三个块在库里都真实存在（字数 685 / 1440 / 692 对得上）。
+> 具体到 d06 这条 query：**只有 685、1440 两条在前 30 名里彻底找不到**；692 其实进了榜（② #2、① #18），
+> 只是它显示出来的预览文字是“隔壁块”的（见步骤 3），所以光看屏幕会以为它也不在。
 
 **坐标 ① `GA55 p9 text（685 字）` —— GDCAGO 团标 5.2.2 c)「…最小压力阀、安全阀…」**
 
@@ -252,7 +253,7 @@ uv run python scripts/search_debug.py "用气端没变化但空压机频繁加�
 
 ## 步骤 3（7 分钟）· 判决 + 填结论
 
-对照 1.3 的表，只允许落进下面某一格（⚠️ **本次 7 格全都对不上，见下面的 G 类**）：
+对照 1.3 的表，只允许落进下面某一格（⚠️ **A~F 六类 + H 都套不上，本次新增 G 类，见下**）：
 
 | 你的情况 | 结论 |
 | --- | --- |
@@ -267,7 +268,7 @@ uv run python scripts/search_debug.py "用气端没变化但空压机频繁加�
 ### 🚨 本次判决：A–F 全不成立，新增第 7 类 **G（索引与切块不同步）**
 
 **判 A 的理由不成立**：`chunks.jsonl` 里 grep 得到 685 / 1440 / 692 三块，库里不缺数据。
-**判 C/D 也不成立**：1440 那块确实是超长表格块（37 行 1440 字）—— 但它连 ①② 都没进，
+**判 C/D 也不成立**：1440 那块确实是超长表格块（37 行 1440 字）—— 但它连 ①②③④ 都没进，
 不是“进来后被长块挤掉”，不能算 D。
 **判 E 只能骗自己**：692 那块确实 ③#2 → ④#5（掉 3 位），单看这条很像 E。**但 ④ 拿到的 `text` 不是它自己的**（见下）。
 
@@ -502,7 +503,7 @@ git push
 ```powershell
 cd "D:\pi 工作文件夹\项目学习"
 
-# 1. 示范 1（E 类：重排把对的压掉了）
+# 1. 示范 1（原判 E，复核是 H:top_k 截断）
 uv run python scripts/search_debug.py "振动11mm/s标准" --show 30 2>$null
 
 # 2. 自己跑 d06
@@ -511,16 +512,19 @@ uv run python scripts/search_debug.py "用气端没变化但空压机频繁加�
 # 3. 先在库里 grep 坐标（证伪 A 类）
 uv run python -c "import json;rows=[json.loads(l) for l in open('data/index/chunks.jsonl',encoding='utf-8')];hit=[r for r in rows if ('\u52a0\u5378\u8f7d' in r['text'] or '\u538b\u529b\u9600' in r['text']) and r['device_model']=='GA55'];print('\u547d\u4e2d\u5757\u6570',len(hit));[print(r['device_model'],'p'+str(r['page']),r['block_type'],len(r['text']),r['text'][:45].replace(chr(10),' ')) for r in hit[:10]]" 2>$null
 
-# 4. 阶段 3 污染
+# 4. 一条命令看全：点数/孤儿点/文本不一致率 + 坐标 4 站名次（Day3 新增）
+uv run python scripts/verify_day3.py 2>$null
+
+# 5. 阶段 3 污染
 uv run python -c "from eqagent.agent.tools import search_manual; qs=['\u6392\u6c14\u6e29\u5ea6\u9ad8','\u4e3b\u8f74\u5f02\u54cd','\u8f74\u627f\u6e29\u5ea6\u9ad8','\u4f3a\u670d\u62a5\u8b66','\u5200\u5e93\u5361\u5200','\u632f\u52a8\u8d85\u6807']; [print('\n###',q,'\n  \u4e0d\u8fc7\u6ee4:',[h['device_model'] for h in search_manual(q,top_k=5)],'\n  GA55  :',[h['device_model'] for h in search_manual(q,device_model='GA55',top_k=5)]) for q in qs]" 2>$null
 
-# 5. 阶段 4.1 块长分布
+# 6. 阶段 4.1 块长分布
 uv run python scripts/chunk_stats.py 2>$null
 ```
 
 # 附 · 今天的三条验收线
 
-1. **能讲**：不用看文档，说清"4 站分别靠什么找"和"E 类的判据是什么"。
+1. **能讲**：不用看文档，说清"4 站分别靠什么找"，以及 **E（重排真压了）与 H（只是过了 top_k 那刀）怎么分**。
 2. **能做**：给你一条新 query + 一个坐标，你能在 10 分钟内写出 4 行物流单 + 类型 + 下一步。
 3. **留痕**：`docs/metrics.md` 里多 1~2 行**带页码级证据**的失败模式；`Day2任务.md` 2.5 的模板被填满。
 
