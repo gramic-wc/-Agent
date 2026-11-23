@@ -1,0 +1,25 @@
+PS D:\pi 工作文件夹\项目学习> uv run python -c "from eqagent.agent.tools import search_manual; qs=['\u6392\u6c14\u6e29\u5ea6\u9ad8','\u4e3b\u8f74\u5f02\u54cd','\u8f74\u627f\u6e29\u5ea6\u9ad8','\u4f3a\u670d\u62a5\u8b66','\u5200\u5e93\u5361\u5200','\u632f\u52a8\u8d85\u6807']; [print('\n###',q,'\n  \u4e0d\u8fc7\u6ee4:',[h['device_model'] for h in search_manual(q,top_k=5)],'\n  GA55  :',[h['device_model'] for h in search_manual(q,device_model='GA55',top_k=5)]) for q in qs]" 2>$null
+
+### 排气温度高
+  不过滤: ['GA55', 'GA55', 'GA55', 'GA55', 'GA55']
+  GA55  : ['GA55', 'GA55', 'GA55', 'GA55', 'GA55']
+
+### 主轴异响
+  不过滤: ['YE3-160M', 'VMC850', 'VMC850', 'YE3-160M', 'YE3-160M']
+  GA55  : ['GA55', 'GA55', 'GA55', 'GA55', 'GA55']
+
+### 轴承温度高
+  不过滤: ['YE3-160M', 'YE3-160M', 'YE3-160M', 'YE3-160M', 'YE3-160M']
+  GA55  : ['GA55', 'GA55', 'GA55', 'GA55', 'GA55']
+
+### 伺服报警
+  不过滤: ['VMC850', 'VMC850', 'VMC850', 'VMC850', 'VMC850']
+  GA55  : ['GA55', 'GA55', 'GA55', 'GA55', 'GA55']
+
+### 刀库卡刀
+  不过滤: ['VMC850', 'VMC850', 'VMC850', 'VMC850', 'VMC850']
+  GA55  : ['GA55', 'GA55', 'GA55', 'GA55', 'GA55']
+
+### 振动超标
+  不过滤: ['YE3-160M', 'YE3-160M', 'YE3-160M', 'GA55', 'GA55']
+  GA55  : ['GA55', 'GA55', 'GA55', 'GA55', 'GA55']
