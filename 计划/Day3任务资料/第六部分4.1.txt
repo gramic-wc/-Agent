@@ -1,0 +1,35 @@
+PS D:\pi 工作文件夹\项目学习> uv run python scripts/chunk_stats.py 2>$null
+索引文件：D:\pi 工作文件夹\项目学习\data\index\chunks.jsonl
+总块数 2023   类型分布： {'figure': 339, 'text': 1394, 'table': 290}
+
+正文块 1394
+  最短 2   中位数 108   最长 3813
+  分位： {10: 16, 25: 28, 50: 108, 75: 300, 90: 640, 99: 1248}
+  超短块 (<40 字)：440 条（31.6%）
+  超长块 (>900 字)：25 条（1.8%）
+
+△ 超短块 > 15%：440 条占位但没信息量 → Day 13 处理
+
+超短块来自哪些文档：
+   284  VMC850_SINUMERIK_系统手册
+    34  GA55_user_manual
+    25  VMC850_GSK983M_PLC使用说明
+    24  YE3_皖南_样本
+    16  YE3_YE5_团标
+    13  GA55_维护保养规范_团标
+    12  单螺杆_变频喷水_团标
+    11  VMC850_JN-NV900_样本
+
+抽 12 条超短块，并复检质检规则是否漏判：
+  p8    text  'User manual'                    [正常]
+  p9    text  'User manual'                    [正常]
+  p10   text  'User manual'                    [正常]
+  p11   text  'User manual'                    [正常]
+  p12   text  'User manual'                    [正常]
+  p13   text  'User manual'                    [正常]
+  p14   text  'User manual'                    [正常]
+  p15   text  'User manual'                    [正常]
+  p16   text  'User manual'                    [正常]
+  p16   text  'Line\nIndicates\nRemarks'       [正常]
+  p16   text  'relevant instruction book.'     [正常]
+  p16   text  'Check the sensor wiring.'       [正常]
