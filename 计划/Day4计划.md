@@ -247,8 +247,8 @@ uv run python scripts/verify_day3.py 2>$null
 uv run python scripts/chunk_stats.py 2>$null | Select-Object -Last 20
 ```
 
-✅ **实测抽样（12 条）**：`User manual` 连占 **8 条**（p8~p15，几乎每页一条）+ `Line\nIndicates\nRemarks` **1 条** = **9 条纯页眉**；
-剩下几条是句子碎片（`relevant instruction book.` / `Check the sensor wiring.`）
+✅ **实测抽样（12 条）**：`User manual` 连占 **9 条**（p8~p16，每页一条）+ `Line\nIndicates\nRemarks` **1 条** = **10/12 是纯页眉（83%）**；
+剩下 **2 条**是句子碎片（`relevant instruction book.` / `Check the sensor wiring.`）
 → **页眉是主力，但不能一刀切删短块**。超短块来源 Top3：**284** `VMC850_SINUMERIK_系统手册` / 34 `GA55_user_manual` / 25 `VMC850_GSK983M_PLC使用说明`。
 
 ✍️ **写一条规则（今天只写规则，不改代码）**：

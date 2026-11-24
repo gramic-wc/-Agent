@@ -1,0 +1,21 @@
+PS D:\pi 工作文件夹\项目学习> uv run python scripts/chunk_stats.py 2>$null | Select-Object -Last 20
+    25  VMC850_GSK983M_PLC浣跨敤璇存槑
+    24  YE3_鐨栧崡_鏍锋湰
+    16  YE3_YE5_鍥㈡爣
+    13  GA55_缁存姢淇濆吇瑙勮寖_鍥㈡爣
+    12  鍗曡灪鏉哶鍙橀鍠锋按_鍥㈡爣
+    11  VMC850_JN-NV900_鏍锋湰
+
+鎶?12 鏉¤秴鐭潡锛屽苟澶嶆璐ㄦ瑙勫垯鏄惁婕忓垽锛?
+  p8    text  'User manual'                    [姝ｅ父]
+  p9    text  'User manual'                    [姝ｅ父]
+  p10   text  'User manual'                    [姝ｅ父]
+  p11   text  'User manual'                    [姝ｅ父]
+  p12   text  'User manual'                    [姝ｅ父]
+  p13   text  'User manual'                    [姝ｅ父]
+  p14   text  'User manual'                    [姝ｅ父]
+  p15   text  'User manual'                    [姝ｅ父]
+  p16   text  'User manual'                    [姝ｅ父]
+  p16   text  'Line\nIndicates\nRemarks'       [姝ｅ父]
+  p16   text  'relevant instruction book.'     [姝ｅ父]
+  p16   text  'Check the sensor wiring.'       [姝ｅ父]
