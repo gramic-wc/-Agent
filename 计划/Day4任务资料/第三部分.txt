@@ -1,0 +1,3 @@
+PS D:\pi 工作文件夹\项目学习> uv run python -c "from eqagent.agent.tools import search_manual; [print(k, [ (h['page'], h['block_type']) for h in search_manual('振动11mm/s标准', top_k=k)]) for k in (6, 10)]" 2>$null
+6 [(11, 'text'), (8, 'text'), (4, 'text'), (21, 'text'), (13, 'text'), (21, 'table')]
+10 [(11, 'text'), (8, 'text'), (4, 'text'), (21, 'text'), (13, 'text'), (21, 'table'), (5, 'text'), (18, 'table'), (27, 'text'), (17, 'table')]
