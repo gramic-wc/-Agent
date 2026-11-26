@@ -1,4 +1,4 @@
-# Day 5 计划 · 2 小时（重点：**清掉 284 条死卡片，然后在干净库上重跑 W1 硬验收**）
+# Day 5 计划 · 2 小时（重点：**保守清理页眉，在干净库上完成 W1 A/B 验收**）
 
 > **今天的唯一硬目标**：把 4.2 写好的页眉规则**落进代码并重建**，然后用「同一套 query」证明
 > **清页眉没让召回掉下去**（术语 8 条 A→B、口语 d01~d08）。
@@ -15,8 +15,8 @@
 | 示范 1 复测 | ✅ 已填 | 表 20 ④ **#7 → #6**（H 由修库自然消解） |
 | `top_k` 6→10 | ✅ 验完，**不改** | 6 与 10 里表 20 都排第 6，无增量 |
 | 切块 `max_len` 400 实验 | ⏭️ **跳过**（前提不成立） | 1440 已进榜 → D 类不成立；`chunker.py` 零改动 |
-| 4.2 页眉规则 | ✅ 规则已定，**代码没改** | 抽样 12 条 → **10/12 是纯页眉**（`User manual` ×9）；284/440 来自 SINUMERIK |
-| **W1 召回硬验收** | ❌ **一直没在新库上跑过** | Day2 的 8/8、8/8 是**脏库**时期的数，不能当验收 |
+| 4.2 页眉规则 | ✅ 已按收紧版落地 | 最终规则只删“顶部、跨 ≥5 页重复、6~40 字、无数字”的行；全库移除 **69 行**，其中 SINUMERIK **28 行** |
+| **W1 召回硬验收** | ✅ 已完成 | 同一组 query：术语 **8/8 → 8/8**，口语 **8/8**，top5 结果与 A 基线一致 |
 
 **为什么今天先清页眉、却先量召回**：
 > 页眉清理是**删块**的改动，删错了召回会掉，而且掉了不容易发现（看着还是 8/8，其实命中的页变了）。
@@ -68,66 +68,91 @@ uv run python -c "from eqagent.agent.tools import search_manual; qs=['排气温�
 
 | # | query | 目标设备 | Day2 判据页 | A：top5 里命中数 | A：第几名 | A 命中？ |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 排气温度高 处理 | GA55 | 团标 p13 / p20 | ___ | ___ | ___ |
-| 2 | 油冷却器 清洗 | GA55 | 团标 p14 / p9 | ___ | ___ | ___ |
-| 3 | 油压不足 检查 | GA55 | 团标 p14 / p15 | ___ | ___ | ___ |
-| 4 | 刀库卡刀 报警 2021 | VMC850 | VMC850 p32 | ___ | ___ | ___ |
-| 5 | 伺服过载 排查 | VMC850 | VMC850 p4 | ___ | ___ | ___ |
-| 6 | 轴承 温度 上限 | YE3-160M | YE3 p4 | ___ | ___ | ___ |
-| 7 | 振动 11mm/s 标准 | YE3-160M | YE3 p11 / p21 | ___ | ___ | ___ |
-| 8 | 绝缘 0.3M 兆欧 | YE3-160M | YE3 p12 / p8 / p21 | ___ | ___ | ___ |
+| 1 | 排气温度高 处理 | GA55 | 团标 p13 / p20 | 2 | 第 1（p13） | ✅ |
+| 2 | 油冷却器 清洗 | GA55 | 团标 p14 / p9 | 2 | 第 1（p14） | ✅ |
+| 3 | 油压不足 检查 | GA55 | 团标 p14 / p15 | 2 | 第 2（p15） | ✅ |
+| 4 | 刀库卡刀 报警 2021 | VMC850 | VMC850 p32 | 2 | 第 1（p51） | ✅ |
+| 5 | 伺服过载 排查 | VMC850 | VMC850 p4 | 1 | 第 1（p4） | ✅ |
+| 6 | 轴承 温度 上限 | YE3-160M | YE3 p4 | 4 | 第 1（p4） | ✅ |
+| 7 | 振动 11mm/s 标准 | YE3-160M | YE3 p11 / p21 | 2 | 第 1（p11） | ✅ |
+| 8 | 绝缘 0.3M 兆欧 | YE3-160M | YE3 p12 / p8 / p21 | 4 | 第 1（p12） | ✅ |
 
-**A = ___ / 8**（Day2 脏库基线是 8/8 = 1.00；今天**掉到 6/8 以下就是大新闻**，先记 `?`，别现场改代码）
+**A = 8 / 8**（Day2 脏库基线是 8/8 = 1.00；今天**掉到 6/8 以下就是大新闻**，先记 `?`，别现场改代码）
 
-> 📌 顺带记一行：8 条里 **top5 有多少条不是目标设备**（跨设备污染）→ A 污染 = ___ / 40。
+> 📌 顺带记一行：8 条里 **top5 有多少条不是目标设备**（跨设备污染）→ A 污染 = **7 / 40**。
 > Day2 的口径是「不过滤」3/30 = 10%，这里口径换成了 top5 × 8 条 = 40 个位子，**数字不能直接和 10% 比，要说清口径**。
+>
+> 命中数口径：目标设备一致，且该页能提供限值、步骤、更换件或明确的下一步排查入口。
 
 ---
 
 # 第二部分 · 落地页眉规则（30 分钟）
 
-## 2.1 改哪儿（看完再动手，别改错地方）
+## 2.1 实际怎么改（已修正失败版规则）
 
 `src/eqagent/ingest/parse.py`：**在 `pages` 从缓存/解析拿回来之后、进页循环之前**插一步过滤。
-这样做的三个好处，改之前先认一下：
+关键选择如下，改之前先认一下：
 
 | 选择 | 为什么 |
 | --- | --- |
 | 在 **pagecache 之后**过滤，而不是改 `_extract_page` | 改规则**不用重解析 PDF**（`data/index/pagecache/` 还能用），试错只要几十秒 |
 | 只删 `lines`，不碰 `tables` / `images` | 表格和图纸不参与这条规则，不会误伤 |
-| **不加**「带数字的重复行」 | 标准号 `T/GDCAGO 1—2024` 也是每页重复，但它是合规页眉、无害；今天只清**纯文字页眉**，一次只动一小步 |
+| **必须是顶部重复行** | 原计划只按“重复 + 短 + 无数字”过滤，会把 `说明：`、`操作步骤` 和正文重复句一起删掉；最终规则要求 ≥80% 的出现位置在页面顶部 10% |
+| **保留过滤前字号中位数** | 直接拿过滤后的行算中位数，会把正文短行重新判成标题，导致块数反而增加；字号分布必须使用原始页数据 |
 
 ```python
+# parse.py 顶部导入区
+from collections import defaultdict
+
 # parse.py 顶部常量区（跟 HEADING_RATIO 放一起）
-HEADER_MAX_CHARS = 40   # 超过 40 字的多半是正文，不当页眉
-HEADER_MIN_PAGES = 5    # 同一文档里重复 ≥5 次才算"跑动页眉"
+HEADER_MAX_CHARS = 40
+HEADER_MIN_PAGES = 5
+HEADER_MIN_TEXT_CHARS = 6
+HEADER_TOP_RATIO = 0.10
 
 
 def _drop_running_headers(pages: list[dict]) -> list[dict]:
-    """删掉「同文档内重复 ≥5 次、<40 字、不带数字、不是题注」的页眉页脚行。
+    """删除同文档中至少 5 页重复出现在页面顶部的纯文字页眉。"""
 
-    4.2 抽样依据：SINUMERIK 的 `User manual`（p8~p16 每页一条）、`Line/Indicates/Remarks`。
-    """
-    from collections import Counter
+    def norm(text: str) -> str:
+        return re.sub(r"\s+", " ", text).strip().lower()
 
-    def norm(t: str) -> str:
-        return re.sub(r"\s+", " ", t).strip().lower()
-
-    def is_candidate(t: str) -> bool:
-        t = t.strip()
+    def is_candidate(text: str) -> bool:
+        text = text.strip()
         return (
-            0 < len(t) <= HEADER_MAX_CHARS
-            and not re.search(r"\d", t)          # 带数字的不是纯页眉（标准号/表号/页码）
-            and not CAP_TAB.match(t)             # 题注不动
-            and not CAP_FIG.match(t)
+            HEADER_MIN_TEXT_CHARS <= len(text) <= HEADER_MAX_CHARS
+            and not re.search(r"\d", text)
+            and not CAP_TAB.match(text)
+            and not CAP_FIG.match(text)
         )
 
-    cnt = Counter(norm(ln["text"]) for p in pages for ln in p["lines"] if is_candidate(ln["text"]))
-    bad = {k for k, n in cnt.items() if n >= HEADER_MIN_PAGES}
+    occurrences: dict[str, list[tuple[int, float]]] = defaultdict(list)
+    for pno, page in enumerate(pages):
+        bottoms = [line["bbox"][3] for line in page["lines"]]
+        bottoms += [rect[3] for rect, _ in page["tables"]]
+        bottoms += [rect[3] for rect, _ in page["images"]]
+        page_bottom = max(bottoms or [1.0])
+        for line in page["lines"]:
+            if is_candidate(line["text"]):
+                occurrences[norm(line["text"])].append(
+                    (pno, line["bbox"][1] / page_bottom)
+                )
+
+    bad = {
+        text
+        for text, hits in occurrences.items()
+        if len({pno for pno, _ in hits}) >= HEADER_MIN_PAGES
+        and sum(y <= HEADER_TOP_RATIO for _, y in hits) / len(hits) >= 0.8
+    }
+
     out = []
-    for p in pages:
-        keep = [ln for ln in p["lines"] if not (is_candidate(ln["text"]) and norm(ln["text"]) in bad)]
-        out.append({**p, "lines": keep})
+    for page in pages:
+        keep = [
+            line
+            for line in page["lines"]
+            if not (is_candidate(line["text"]) and norm(line["text"]) in bad)
+        ]
+        out.append({**page, "lines": keep})
     return out
 ```
 
@@ -137,12 +162,20 @@ def _drop_running_headers(pages: list[dict]) -> list[dict]:
         if fresh:
             pages = _extract_document(doc)     # ← 这句保持原样，缓存里存的是"原始行"
 
-        pages = _drop_running_headers(pages)    # ← 新增：每份文档独立统计，所以放在 parse_pdf 内、页循环前
+        pages_f = _drop_running_headers(pages)  # ← 过滤只用于本次切块
+        for pno in range(doc.page_count):
+            hit = pages_f[pno]                  # ← 页循环读取过滤结果
+            ...
+            # 标题字号中位数仍从原始 pages[pno] 计算
+            sizes = sorted(ln["size"] for ln in pages[pno]["lines"]) or [10.0]
 ```
 
 > ⚠️ **坑（会白干半小时）**：`if fresh: _save_page_cache(...)` 在函数**末尾**，`pages` 这时已经被过滤过 →
 > 存进缓存的就是删过的版本。要么把过滤结果放另一个变量（`pages_f = _drop_running_headers(pages)`，循环用 `pages_f`），
 > 要么就别依赖缓存。**建议用前者**，缓存永远存原始数据。
+>
+> **失败记录**：第一版误写成 `pages = _drop_running_headers(pages)`，并且只按“重复”判断，结果块数 **2023 → 2105**。
+> 原因是正文短句被当成页眉后，标题中位数发生漂移。这个 2105 版本**不保留、不作为 B 列**。
 
 ## 2.2 重切 + 重建（两个都做，少一个就再造一个 G）
 
@@ -154,15 +187,18 @@ uv run python -c "from eqagent.retrieve.index import get_client, recreate_collec
 uv run eq-ingest --no-vlm
 ```
 
-**期望（不是合格线，是"改对了没"的体感）**：块数 **2023 → 1700±40**（284 条 SINUMERIK 页眉 + 其它文档的页眉一起消失）。
-如果块数几乎没变 → 规则没生效（`is_candidate` 全军覆没 / 没接上 / 读了旧 pagecache），先看日志里 `_drop_running_headers` 删了多少行。
+**实测结果**：块数 **2023 → 1956**，`_drop_running_headers` 共移除 **69 行**。
+其中 SINUMERIK 只移除 **28 行**；原计划里的“284 条 SINUMERIK 页眉 → 1700±40”没有数据支持。
+如果为了达到 1700 而继续放宽规则，会把正文短句一起删掉，因此 **1956 才是这次收紧规则后的正确结果**。
 
 🚑 **失败了怎么办**
 
 | 现象 | 原因 | 处理 |
 | --- | --- | --- |
 | 块数一点没变 | 函数没接上，或者 pagecache 里存的已是过滤后版本 | 在函数里 `log.info("丢页眉行 %d", ...)`，看一眼就知道 |
-| 块数掉到 <1200 | 阈值太松（把重复的正文短行也删了） | 先把 `HEADER_MIN_PAGES` 5 → 8 再跑，**别改别的** |
+| **块数反而增加（2023 → 2105）** | 规则只有“重复 + 短 + 无数字”，误删正文短句；同时又用过滤后的行算字号中位数，导致更多段落被判成标题 | 加“顶部 10% + 至少 6 字”，使用 `pages_f` 过滤但保留原始 `pages` 计算中位数；重切重建 |
+| 块数掉到 <1200 | 阈值太松（把重复的正文短行也删了） | 先检查日志中的候选文本，再收紧位置/长度条件，不要只调 `HEADER_MIN_PAGES` |
+| `verify_day3.py` 报 `points > jsonl` | 嵌入式 Qdrant 删除 collection 后，底层 SQLite 可能残留旧点 | 以当前 `chunk_id` 为准精确删除孤儿点，再跑三自检；不能只看入库日志的“1956 块” |
 | `eq-ingest` 报错 | 语法/缩进 | 先 `uv run python -c "import eqagent.ingest.parse"` 单独验 |
 
 ---
@@ -177,12 +213,15 @@ uv run python scripts/verify_day3.py 2>$null
 
 | 自检 | 合格线 | 修前（Day4） | 今天 |
 | --- | --- | --- | --- |
-| ① 点数 == `chunks.jsonl` 行数 | 完全相等 | 2023 == 2023 | ___ |
-| ② 孤儿点 | 0 | 0 | ___ |
-| ③ `payload.text` 不一致率 | < 1% | 0.0% | ___ |
-| ④ ① dense 条数 | 30/30 | 30/30 | ___ |
+| ① 点数 == `chunks.jsonl` 行数 | 完全相等 | 2023 == 2023 | **1956 == 1956** |
+| ② 孤儿点 | 0 | 0 | **0** |
+| ③ `payload.text` 不一致率 | < 1% | 0.0% | **0.0%** |
+| ④ ① dense 条数 | 30/30 | 30/30 | **30/30** |
 
 > 🚨 **③ 一旦不为 0，说明你又造了一个 G**（改完 parse 没重建 / 重建没删旧点）。别往下走，回去重跑 2.2。
+>
+> 本次中间状态曾出现 `points=4130 / jsonl=1956 / 孤儿点=2174`。这不是可接受的“已重建”，
+> 必须按当前 `chunk_id` 删除孤儿点，直到 `1956 == 1956` 才能继续。
 
 ## 3.2 块长对比（这是今天的核心数字）
 
@@ -192,16 +231,19 @@ uv run python scripts/chunk_stats.py 2>$null
 
 | 指标 | Day4（未清页眉） | Day5 清完后 | 说明 |
 | --- | --- | --- | --- |
-| 总块数 | 2023 | ___ | 期望 1700±40 |
-| 正文块数 | 1394 | ___ | |
-| 正文中位数 | 108 | ___ | **应该基本不变**（±10）；大跳 = 动了不该动的东西 |
-| 超短块（<40 字） | **440（31.6%）** | ___ | 期望 **~156（~9%）** |
-| 超长块（>900） | 25（1.8%） | ___ | 应该基本不变 |
-| 超短块来源 Top1 | SINUMERIK 284 | ___ | **期望这个数字塌到 <20** |
-| 抽样 12 条里还有几条 `User manual` | 10 | ___ | 期望 **0** |
+| 总块数 | 2023 | **1956** | 没有硬凑 1700±40；收紧规则后只删 69 行 |
+| 正文块数 | 1394 | **1327** | |
+| 正文中位数 | 108 | **127** | 比 Day4 增加 19，说明切块结构有变化；需结合召回结果看，未继续调 chunker |
+| 超短块（<40 字） | **440（31.6%）** | **376（28.3%）** | 未达原 `~156` 目标；剩余短块多数不是本轮可安全删除的纯页眉 |
+| 超长块（>900） | 25（1.8%） | **25（1.9%）** | 数量不变 |
+| 超短块来源 Top1 | SINUMERIK 284 | **SINUMERIK 261** | 只移除 28 行顶部 SINUMERIK 标题，未为了数字硬删正文 |
+| 抽样 12 条里还有几条 `User manual` | 10 | **0** | 通过 |
 
-🚑 **口径提醒**：超短块**占比**的分母变了（块总数变少了），所以"31.6% → 9%"里有一半是分母的功劳。
-**报告时两个数都要写：440 → 156（条）和 31.6% → ~9%（比）**，只写百分比会被误读成"删了 3/4 的短块"。
+🚑 **口径提醒**：超短块**占比**的分母变了（正文块总数从 1394 变成 1327），所以不能只看百分比。
+**报告时两个数都要写：440 → 376（条）和 31.6% → 28.3%（比）**。
+
+> ⚠️ **本次实际结论**：`440 → 376`、`31.6% → 28.3%`，没有达到原文的 `~156`。
+> 因为最终规则只删除“页面顶部、跨页重复、至少 6 字、无数字”的行；继续放宽会把 `说明：`、`操作步骤` 等正文删掉。
 
 ---
 
@@ -217,23 +259,26 @@ uv run python -c "from eqagent.agent.tools import search_manual; qs=['排气温�
 
 | # | query | A 命中 | B 命中 | B 的 top1（设备+页码） | 变好 / 变差 / 不变 |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 排气温度高 处理 | ___ | ___ | ___ | ___ |
-| 2 | 油冷却器 清洗 | ___ | ___ | ___ | ___ |
-| 3 | 油压不足 检查 | ___ | ___ | ___ | ___ |
-| 4 | 刀库卡刀 报警 2021 | ___ | ___ | ___ | ___ |
-| 5 | 伺服过载 排查 | ___ | ___ | ___ | ___ |
-| 6 | 轴承 温度 上限 | ___ | ___ | ___ | ___ |
-| 7 | 振动 11mm/s 标准 | ___ | ___ | ___ | ___ |
-| 8 | 绝缘 0.3M 兆欧 | ___ | ___ | ___ | ___ |
+| 1 | 排气温度高 处理 | ✅ | ✅ | GA55 · 团标 p13 · table | 不变 |
+| 2 | 油冷却器 清洗 | ✅ | ✅ | GA55 · 团标 p14 · table | 不变 |
+| 3 | 油压不足 检查 | ✅ | ✅ | GA55 · 团标 p16 · table | 不变 |
+| 4 | 刀库卡刀 报警 2021 | ✅ | ✅ | VMC850 · GSK983M p51 · table | 不变 |
+| 5 | 伺服过载 排查 | ✅ | ✅ | VMC850 · GSK983M p4 · text | 不变 |
+| 6 | 轴承 温度 上限 | ✅ | ✅ | YE3-160M · 高压电机 p4 · text | 不变 |
+| 7 | 振动 11mm/s 标准 | ✅ | ✅ | YE3-160M · 高压电机 p11 · text | 不变 |
+| 8 | 绝缘 0.3M 兆欧 | ✅ | ✅ | YE3-160M · 高压电机 p12 · text | 不变 |
 
-**A = ___ / 8 → B = ___ / 8（验收线 ≥ 6/8 = 0.75）**
-**A 污染 ___ / 40 → B 污染 ___ / 40**
+**A = 8 / 8 → B = 8 / 8（验收线 ≥ 6/8 = 0.75）**
+**A 污染 7 / 40 → B 污染 7 / 40**
+
+> 📌 任务资料 `第一部分.txt` 与 `第四部分.txt` 的 8×top5 输出逐条一致，因此 B 的 top1 和整个 top5 都与 A 相同。
+> 这不说明页眉清理“没用”，而是说明这次收紧后的规则只删除了不参与召回目标的顶部噪声，没有改变这 8 条 query 的排序。
 
 🎯 **三种结果，三种下一步**
 
 | B 相对 A | 说明 | 下一步 |
 | --- | --- | --- |
-| **B ≥ A（不掉或更好）** | 页眉清理是净收益，删的都是死卡片 | **保留规则**，进第六部分 |
+| **B ≥ A（不掉或更好）** | 本次收紧后的规则只删顶部重复页眉，召回没有下降 | **保留规则**，进第六部分；未清掉的 261 个 SINUMERIK 短块留待后续单独判断 |
 | **B 掉 1 条** | 大概率删到了"看着像页眉"的短句（`relevant instruction book.` 那类） | 阈值 5→8 再跑一次（**只改这个数**），仍掉就回滚 |
 | **B 掉 ≥2 条** | 规则误伤正文/题注 | **直接回滚**（见第七部分），今天改成"只写规则不落地"，把 4.2 结论带进 Day6 |
 

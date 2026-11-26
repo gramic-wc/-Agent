@@ -1,0 +1,95 @@
+PS D:\pi 工作文件夹\项目学习> uv run python -c "from eqagent.agent.tools import search_manual; qs=['排气温度高 处理','油冷却器 清洗','油压不足 检查','刀库卡刀 报警 2021','伺服过载 排查','轴承 温度 上限','振动 11mm/s 标准','绝缘 0.3M 兆欧']; [print('\n###',q,*[(h['device_model'],h['doc_title'][:14],'p'+str(h['page']),h['block_type']) for h in search_manual(q,top_k=5)],sep='\n  ') for q in qs]" 2>$null
+
+###
+  排气温度高 处理
+  ('GA55', 'GA55_维护保养规范_团标', 'p13', 'table')
+  ('GA55', 'GA55_维护保养规范_团标', 'p20', 'table')
+  ('GA55', '单螺杆_变频喷水_团标', 'p9', 'text')
+  ('GA55', '单螺杆_变频喷水_团标', 'p8', 'table')
+  ('GA55', 'GA55_user_manu', 'p22', 'text')
+
+###
+  油冷却器 清洗
+  ('GA55', 'GA55_维护保养规范_团标', 'p14', 'table')
+  ('YE3-160M', 'YE3_高压电机_说明书', 'p8', 'text')
+  ('GA55', 'GA55_维护保养规范_团标', 'p9', 'text')
+  ('YE3-160M', 'YE3_高压电机_说明书', 'p5', 'text')
+  ('YE3-160M', 'YE3_高压电机_说明书', 'p13', 'text')
+
+###
+  油压不足 检查
+  ('GA55', 'GA55_维护保养规范_团标', 'p16', 'table')
+  ('GA55', 'GA55_维护保养规范_团标', 'p15', 'table')
+  ('YE3-160M', 'YE3_高压电机_说明书', 'p14', 'table')
+  ('GA55', 'GA55_维护保养规范_团标', 'p14', 'table')
+  ('GA55', 'GA55_维护保养规范_团标', 'p13', 'table')
+
+###
+  刀库卡刀 报警 2021
+  ('VMC850', 'VMC850_GSK983M', 'p51', 'table')
+  ('VMC850', 'VMC850_GSK983M', 'p32', 'text')
+  ('VMC850', 'VMC850_GSK983M', 'p42', 'text')
+  ('VMC850', 'VMC850_GSK983M', 'p43', 'text')
+  ('VMC850', 'VMC850_GSK983M', 'p13', 'table')
+
+###
+  伺服过载 排查
+  ('VMC850', 'VMC850_GSK983M', 'p4', 'text')
+  ('GA55', 'GA55_user_manu', 'p18', 'table')
+  ('VMC850', 'VMC850_GSK983M', 'p51', 'table')
+  ('VMC850', 'VMC850_GSK983M', 'p12', 'table')
+  ('GA55', 'GA55_维护保养规范_团标', 'p15', 'table')
+
+###
+  轴承 温度 上限
+  ('YE3-160M', 'YE3_高压电机_说明书', 'p4', 'text')
+  ('YE3-160M', 'YE3_YE5_团标', 'p20', 'text')
+  ('YE3-160M', 'YE3_高压电机_说明书', 'p12', 'table')
+  ('YE3-160M', 'YE3_高压电机_说明书', 'p12', 'text')
+  ('YE3-160M', 'YE3_YBX3_使用说明书', 'p10', 'text')
+
+###
+  振动 11mm/s 标准
+  ('YE3-160M', 'YE3_高压电机_说明书', 'p11', 'text')
+  ('GA55', '单螺杆_变频喷水_团标', 'p8', 'text')
+  ('YE3-160M', 'YE3_YE5_团标', 'p4', 'text')
+  ('YE3-160M', 'YE3_YE5_团标', 'p21', 'text')
+  ('YE3-160M', 'YE3_YE5_团标', 'p21', 'table')
+
+###
+  绝缘 0.3M 兆欧
+  ('YE3-160M', 'YE3_高压电机_说明书', 'p12', 'text')
+  ('YE3-160M', 'YE3_高压电机_说明书', 'p8', 'text')
+  ('YE3-160M', 'YE3_高压电机_说明书', 'p13', 'text')
+  ('YE3-160M', 'YE3_YE5_团标', 'p21', 'text')
+  ('YE3-160M', 'YE3_YE5_团标', 'p24', 'table')
+PS D:\pi 工作文件夹\项目学习> git diff src/eqagent/ingest/parse.py
+diff --git a/src/eqagent/ingest/parse.py b/src/eqagent/ingest/parse.py
+index b4ffe53..81a3185 100644
+--- a/src/eqagent/ingest/parse.py
++++ b/src/eqagent/ingest/parse.py
+@@ -10,6 +10,7 @@ import hashlib
+ import json
+ import logging
+ import re
++from collections import defaultdict
+ from pathlib import Path
+
+ import pymupdf as fitz  # PyMuPDF ≥1.24
+@@ -23,6 +24,10 @@ log = logging.getLogger(__name__)
+ CAP_FIG = re.compile(r"^\s*(?:图|Figure|Fig\.?)\s*([0-9]+(?:[-－.．][0-9]+)*)")
+ CAP_TAB = re.compile(r"^\s*表\s*([0-9]+(?:[-－.．][0-9]+)*)")
+
++HEADER_MAX_CHARS = 40
++HEADER_MIN_PAGES = 5
++HEADER_MIN_TEXT_CHARS = 6
++HEADER_TOP_RATIO = 0.10
+ MIN_FIG_SIDE = 90.0  # 短边小于此值多半是图标/装饰
+ MIN_FIG_AREA = 15000.0  # 面积下限（约 120×125pt），避免把无意义小图送进 VL
+ HEADING_RATIO = 1.15  # 字号超过正文中位数 15% 视为标题
+@@ -206,6 +211,57 @@ def _extract_document(doc) -> list[dict]:
+     return [_extract_page(page, use_layout=True) for page in doc]
+
+
++def _drop_running_headers(pages: list[dict]) -> list[dict]:
++    """删除同文档中至少 5 页重复出现在页面顶部的纯文字页眉。"""
