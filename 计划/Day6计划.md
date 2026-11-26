@@ -1,4 +1,4 @@
-# Day 6 计划 · 2 小时（2026-11-26 周四）
+# Day 6 计划 · 2 小时（2026-11-27 周五）
 
 > **今天的唯一硬目标**：在 Day5 的干净库基础上，给 **339 张图**补上可检索的 VLM 描述，重建索引并证明图纸类检索开始生效。
 >
@@ -6,43 +6,40 @@
 
 ---
 
-## 0. 当前状态（2026-11-25 19:21 核对）
+## 0. 当前状态（2026-11-26 Day5 完成后核对）
 
 | 项目 | 当前状态 | 对明天的意义 |
 | --- | --- | --- |
-| Git | `HEAD=af2fa7b`，工作区干净 | 最近一次提交只新增了 Day5 计划，**Day5 尚未落地** |
-| `parse.py` 页眉规则 | 尚无 `_drop_running_headers` | Day5 门禁未通过时，明天不能直接做 VLM |
-| `docs/metrics.md` | 没有 Day5 实测行 | Day5 还没有可复用的 A/B 数字 |
-| 当前块数 | 2023 | Day5 清页眉后应明显下降，作为 Day6 输入基线 |
+| Git | Day5 代码、计划和资料已提交 | 从干净基线启动 Day6 |
+| `parse.py` 页眉规则 | 已有收紧版 `_drop_running_headers` | 只删顶部跨页重复页眉，保留原始字号中位数 |
+| `docs/metrics.md` | 已有 Day5 实测行 | W1 A/B 与三自检数字可复用 |
+| 当前块数 | **1956**（2023→1956，移除 69 行页眉） | Day6 VLM 不应改变正文/表格块数 |
 | 图纸块 | 339 张（GA55 57 / VMC850 256 / YE3 26） | 今天要处理的主体 |
 | `vlm_desc` 非空 | **0 / 339** | 多模态检索链路还没打开 |
 | 图片文件存在 | 339 / 339 | 不需要重新裁图 |
+| W1 基线 | 术语 **8/8**、口语 **8/8** | VLM 后必须做 C 列回归 |
 
 > **按最新排期：VLM 图纸描述是 Day6 的主变量。**
 > 原学习计划里的“补手册 / 缩范围”会引入第二个变量，今天不混做；放到 Day7 复盘时再决策。
 
 ---
 
-## 1. 明天的两个分支（先过门禁，别猜）
+## 1. Day5 门禁结果与执行路径
 
-### A. Day5 已完成 → 执行本计划主体：VLM 图纸描述
+### Day5 门禁：已通过
 
-Day5 必须同时满足：
+| 门禁项 | 结果 |
+| --- | --- |
+| `docs/metrics.md` 有 Day5 行 | ✅ 2026-11-26 |
+| `parse.py` 页眉函数 + 重切重建 | ✅ `_drop_running_headers`，块数 2023→1956 |
+| 三自检 | ✅ 1956==1956、孤儿点 0、不一致 0.0%、dense 30/30 |
+| W1 A/B | ✅ 术语 8/8→8/8；口语 8/8 |
+| 工作区 | ✅ Day5 提交后干净 |
 
-1. `docs/metrics.md` 有 11-25 Day5 实测行；
-2. `parse.py` 里有 `_drop_running_headers`，且已重切 + 重建；
-3. 工作区干净；
-4. `verify_day3.py` 三自检通过；
-5. 能拿出 Day5 的术语 8 条 A/B 表，以及口语 d01~d08 复测结果。
+> 今天执行 VLM 图纸描述主路径。若 Day6 开始时复核发现门禁失效，
+> 立即停止，不跑全量 VLM，回到 `Day5计划.md` 收口。
 
-### B. Day5 未完成 → 明天暂停 VLM，先照 `Day5计划.md` 收口
-
-- 不要运行 `uv run eq-ingest` 的 VLM 全量任务；
-- 不要同时补手册；
-- 先把页眉过滤、重建、A/B 对照、`docs/metrics.md` 和提交做完；
-- VLM 顺延到下一个学习日。
-
-> 理由：VLM 要烧 API 额度并重建整个索引。如果底层块还带着 284 条页眉死卡片，VLM 的结果既昂贵又不可比较。
+> VLM 会烧 API 额度并重建整个索引，因此必须在 Day5 的 1956 块干净文本库上单变量执行。
 
 ---
 
@@ -70,7 +67,7 @@ cd "D:\pi 工作文件夹\项目学习"
 
 git status --short
 git log -1 --oneline
-Select-String -LiteralPath 'docs\metrics.md' -Pattern '2026-11-25' -Encoding UTF8
+Select-String -LiteralPath 'docs\metrics.md' -Pattern '2026-11-26' -Encoding UTF8
 Select-String -LiteralPath 'src\eqagent\ingest\parse.py' -Pattern '_drop_running_headers' -Encoding UTF8
 uv run python scripts/verify_day3.py 2>$null
 ```
@@ -84,7 +81,7 @@ uv run python scripts/verify_day3.py 2>$null
 
 ### 不通过
 
-立即切到分支 B：打开 `计划\Day5计划.md`，今天只做 Day5。
+立即停止：打开 `计划\Day5计划.md`，先收口 Day5 门禁。
 **不要抱着“先试 10 张 VLM”的心态跳步。**
 
 ---
@@ -113,7 +110,7 @@ uv run python -c "import json,os; rows=[json.loads(l) for l in open('data/index/
 - 改前 VLM 覆盖率：____ / ____
 - 图片存在数：____ / ____
 
-> 当前预期：`2023 / 339 / 0 / 339`。如果图片存在数不是 339，先查 `data/figure_cache`，不要跑 VLM。
+> 当前预期：`1956 / 339 / 0 / 339`。如果图片存在数不是 339，先查 `data/figure_cache`，不要跑 VLM。
 
 ---
 
@@ -173,7 +170,7 @@ uv run python scripts/chunk_stats.py 2>$null
 | 孤儿点 | 0 | ____ |
 | `payload.text` 不一致率 | < 1% | ____ |
 | dense 条数 | 30/30 | ____ |
-| 总块数 | 不应因 VLM 大幅变化 | 2023 → ____ |
+| 总块数 | 不应因 VLM 大幅变化 | 1956 → ____ |
 
 > 说明：VLM 只补 `vlm_desc` 并把描述拼进图块 `text`，不应改变正文块/表格块数量和切块逻辑。
 > 如果总块数变化异常，先查是不是误跑了另一版切块代码。
@@ -223,7 +220,7 @@ uv run python -c "from eqagent.agent.tools import search_manual; qs=['GA55 油�
 
 把 Day5 的术语 8 条和口语 d01~d08 再跑一次，记成 C 列：
 
-- Day5 B：术语 ____ / 8，口语 ____ / 8，污染 ____ / 40；
+- Day5 B：术语 **8 / 8**，口语 **8 / 8**，术语污染 **7 / 40**，口语污染 **2 / 40**；
 - Day6 C：术语 ____ / 8，口语 ____ / 8，污染 ____ / 40。
 
 **合格线：C 不低于 B。**
@@ -237,7 +234,7 @@ uv run python -c "from eqagent.agent.tools import search_manual; qs=['GA55 油�
 
 追加一行，至少包含：
 
-- 2026-11-26 Day6 实测；
+- 2026-11-27 Day6 实测；
 - VLM 图块覆盖率：0/339 → ____ / 339；
 - 成功设备分布；
 - 5 张抽查通过数：____ / 5；

@@ -10,6 +10,7 @@ import hashlib
 import json
 import logging
 import re
+from collections import defaultdict
 from pathlib import Path
 
 import pymupdf as fitz  # PyMuPDF ≥1.24
@@ -23,6 +24,10 @@ log = logging.getLogger(__name__)
 CAP_FIG = re.compile(r"^\s*(?:图|Figure|Fig\.?)\s*([0-9]+(?:[-－.．][0-9]+)*)")
 CAP_TAB = re.compile(r"^\s*表\s*([0-9]+(?:[-－.．][0-9]+)*)")
 
+HEADER_MAX_CHARS = 40
+HEADER_MIN_PAGES = 5
+HEADER_MIN_TEXT_CHARS = 6
+HEADER_TOP_RATIO = 0.10
 MIN_FIG_SIDE = 90.0  # 短边小于此值多半是图标/装饰
 MIN_FIG_AREA = 15000.0  # 面积下限（约 120×125pt），避免把无意义小图送进 VL
 HEADING_RATIO = 1.15  # 字号超过正文中位数 15% 视为标题
@@ -206,6 +211,56 @@ def _extract_document(doc) -> list[dict]:
     return [_extract_page(page, use_layout=True) for page in doc]
 
 
+def _drop_running_headers(pages: list[dict]) -> list[dict]:
+    """删除同文档中至少 5 页重复出现在页面顶部的纯文字页眉。"""
+
+    def norm(text: str) -> str:
+        return re.sub(r"\s+", " ", text).strip().lower()
+
+    def is_candidate(text: str) -> bool:
+        text = text.strip()
+        return (
+            HEADER_MIN_TEXT_CHARS <= len(text) <= HEADER_MAX_CHARS
+            and not re.search(r"\d", text)
+            and not CAP_TAB.match(text)
+            and not CAP_FIG.match(text)
+        )
+
+    occurrences: dict[str, list[tuple[int, float]]] = defaultdict(list)
+    for pno, page in enumerate(pages):
+        bottoms = [line["bbox"][3] for line in page["lines"]]
+        bottoms += [rect[3] for rect, _ in page["tables"]]
+        bottoms += [rect[3] for rect, _ in page["images"]]
+        page_bottom = max(bottoms or [1.0])
+
+        for line in page["lines"]:
+            if is_candidate(line["text"]):
+                occurrences[norm(line["text"])].append((pno, line["bbox"][1] / page_bottom))
+
+    bad = {
+        text
+        for text, hits in occurrences.items()
+        if len({pno for pno, _ in hits}) >= HEADER_MIN_PAGES
+        and sum(y <= HEADER_TOP_RATIO for _, y in hits) / len(hits) >= 0.8
+    }
+
+    out = []
+    removed = 0
+    for page in pages:
+        keep = []
+        for line in page["lines"]:
+            if is_candidate(line["text"]) and norm(line["text"]) in bad:
+                removed += 1
+            else:
+                keep.append(line)
+        out.append({**page, "lines": keep})
+
+    if removed:
+        names = "、".join(sorted(bad)[:10])
+        log.info("页眉过滤：移除 %d 行；候选 %s", removed, names)
+    return out
+
+
 def parse_pdf(
     pdf_path: Path | str,
     doc_id: str,
@@ -232,17 +287,20 @@ def parse_pdf(
         if fresh:
             pages = _extract_document(doc)
 
+        # 过滤只用于本次切块，pagecache 仍保存原始行。
+        pages_f = _drop_running_headers(pages)
         for pno in range(doc.page_count):
             page = doc[pno]
             page_no = pno + 1
-            hit = pages[pno]
+            hit = pages_f[pno]
             tables = [(tuple(r), md) for r, md in hit["tables"]]
             images = [(tuple(r), x) for r, x in hit["images"]]
             lines = hit["lines"]
             if not lines and not tables and not images:
                 continue
 
-            sizes = sorted(ln["size"] for ln in lines) or [10.0]
+            # 页眉不参与字号分布，避免过滤后把正文短行重新判成标题。
+            sizes = sorted(ln["size"] for ln in pages[pno]["lines"]) or [10.0]
             median = sizes[len(sizes) // 2]
 
             # 1) 先摘掉图注/表注，避免它们混进正文
