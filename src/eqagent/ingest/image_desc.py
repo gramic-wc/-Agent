@@ -26,12 +26,22 @@ def describe_figures(chunks: list[Chunk], limit: int | None = None) -> list[Chun
     targets = [c for c in chunks if c.block_type == "figure" and c.image_path]
     if limit:
         targets = targets[:limit]
+    consecutive_failures = 0
     for i, chunk in enumerate(targets, 1):
         try:
             desc = llm.vlm_describe(chunk.image_path, PROMPT)
         except llm.LLMError as exc:
+            consecutive_failures += 1
             log.warning("图纸描述失败（%s）：%s", chunk.chunk_id, exc)
+            message = str(exc)
+            if any(f"HTTP {code}" in message for code in (400, 401, 403, 404)):
+                raise llm.LLMError(f"VLM 鉴权/权限/参数错误，停止全量任务：{exc}") from exc
+            if consecutive_failures >= 3:
+                raise llm.LLMError(
+                    f"连续 {consecutive_failures} 张图纸描述失败，停止全量 VLM；最后错误：{exc}"
+                ) from exc
             continue
+        consecutive_failures = 0
         chunk.vlm_desc = desc
         chunk.text = f"{chunk.text}\n图面内容：{desc}"
         log.info("VLM %d/%d %s", i, len(targets), chunk.chunk_id)

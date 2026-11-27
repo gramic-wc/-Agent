@@ -35,7 +35,7 @@ def _post(url: str, payload: dict, *, retries: int = 3, timeout: float = 120.0) 
             if resp.status_code == 200:
                 return resp.json()
             last = LLMError(f"HTTP {resp.status_code}: {resp.text[:400]}")
-            if resp.status_code in {400, 401, 404}:
+            if resp.status_code in {400, 401, 403, 404}:
                 break  # 参数/鉴权错误，重试无意义
         except httpx.HTTPError as exc:
             last = exc

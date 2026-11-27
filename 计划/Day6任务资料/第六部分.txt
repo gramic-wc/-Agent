@@ -1,0 +1,35 @@
+PS D:\pi 工作文件夹\项目学习> uv run python -c "from eqagent.agent.tools import search_manual; qs=['GA55 油冷却器 结构 拆装','VMC850 刀库 结构 图','YE3 接线盒 接线图']; [print('\n###',q,*[(h['device_model'],h['doc_title'][:14],'p'+str(h['page']),h['block_type']) for h in search_manual(q,top_k=5)],sep='\n  ') for q in qs]"
+Building prefix dict from the default dictionary ...
+Loading model from cache C:\Users\30251\AppData\Local\Temp\jieba.cache
+Loading model cost 0.307 seconds.
+Prefix dict has been built successfully.
+
+###
+  GA55 油冷却器 结构 拆装
+  ('GA55', 'GA55_user_manu', 'p30', 'table')
+  ('GA55', 'GA55_user_manu', 'p22', 'text')
+  ('YE3-160M', 'YE3_高压电机_说明书', 'p8', 'text')
+  ('YE3-160M', 'YE3_高压电机_说明书', 'p4', 'text')
+  ('GA55', 'GA55_维护保养规范_团标', 'p14', 'table')
+
+###
+  VMC850 刀库 结构 图
+  ('VMC850', 'VMC850_GSK983M', 'p3', 'table')
+  ('VMC850', 'VMC850_GSK983M', 'p14', 'table')
+  ('VMC850', 'VMC850_SINUMER', 'p87', 'text')
+  ('VMC850', 'VMC850_GSK983M', 'p31', 'text')
+  ('VMC850', 'VMC850_GSK983M', 'p40', 'text')
+
+###
+  YE3 接线盒 接线图
+  ('YE3-160M', 'YE3_YBX3_使用说明书', 'p6', 'text')
+  ('YE3-160M', 'YE3_样本_2', 'p9', 'text')
+  ('YE3-160M', 'YE3_皖南_样本', 'p16', 'text')
+  ('YE3-160M', 'YE3_YBX3_使用说明书', 'p9', 'table')
+  ('YE3-160M', 'YE3_YBX3_使用说明书', 'p8', 'table')
+Exception ignored in: <function QdrantClient.__del__ at 0x000001DF1706E980>
+Traceback (most recent call last):
+  File "D:\pi 工作文件夹\项目学习\.venv\Lib\site-packages\qdrant_client\qdrant_client.py", line 172, in __del__
+  File "D:\pi 工作文件夹\项目学习\.venv\Lib\site-packages\qdrant_client\qdrant_client.py", line 181, in close
+  File "D:\pi 工作文件夹\项目学习\.venv\Lib\site-packages\qdrant_client\local\qdrant_local.py", line 113, in close
+ImportError: sys.meta_path is None, Python is likely shutting down

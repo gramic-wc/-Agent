@@ -1,0 +1,39 @@
+PS D:\pi 工作文件夹\项目学习> git status --short
+PS D:\pi 工作文件夹\项目学习> git log -1 --oneline
+ea85243 (HEAD -> main, origin/main) feat(ingest): 收口Day5页眉过滤与A/B验收；更新Day6计划
+PS D:\pi 工作文件夹\项目学习> Select-String -LiteralPath 'docs\metrics.md' -Pattern '2026-11-26' -Encoding UTF8
+
+docs\metrics.md:11:| 2026-11-26（Day5 实测） | `parse.py` 新增收紧版页眉过滤（页面顶部 10%、跨 ≥5 页重复、6~40 字、无
+数字；保留原始字号中位数）→ 重切 + 重建 | — | — | — | — | — | 块数 **2023→1956**、正文 **1394→1327**、中位数 **
+108→127**、超短块 **440→376（31.6%→28.3%）**、SINUMERIK 短块 **284→261**、抽样 `User manual` **10→0**；三自检 **19
+56==1956**、孤儿点 **0**、不一致 **0.0%**、dense **30/30**；术语 **A 8/8 → B 8/8**、术语污染 **7/40→7/40**；口语 **8/
+8**、污染 **2/40** |
+
+
+PS D:\pi 工作文件夹\项目学习> Select-String -LiteralPath 'src\eqagent\ingest\parse.py' -Pattern '_drop_running_headers' -Encoding UTF8
+
+src\eqagent\ingest\parse.py:214:def _drop_running_headers(pages: list[dict]) -> list[dict]:
+src\eqagent\ingest\parse.py:291:        pages_f = _drop_running_headers(pages)
+
+
+PS D:\pi 工作文件夹\项目学习> uv run python scripts/verify_day3.py 2>$null
+
+==============================================================================
+【1】向量库 vs chunks.jsonl 是否同一代（G 类证伪/证实）
+==============================================================================
+Qdrant  collection=eq_chunks  points=1956
+jsonl   行数=1956    差值=0
+
+两边都有的 id = 1956
+孤儿点（向量库有、jsonl 里已经没有的 id）= 0 (0.0% of points)
+缺 chunk_id 的点 = 0
+→ dense 请求 top30 只返回 20 条，就是这些孤儿点占位后被 _match_id 丢掉
+
+text 逐字不一致 = 0 / 1956 = 0.0%
+  ├ 真错位（= 上一块的文本 / 内容整体不是自己的）= 0
+  └ 只是旧解析的空白·标点差异（字完全一样，无害）      = 0
+
+抽样：一条「标点差异」和一条「真错位」
+
+==============================================================================
+【2】d06 | 用气端没变化但空压机频繁加卸载，储气罐压力不稳（不过滤，chunk_id 口径）
